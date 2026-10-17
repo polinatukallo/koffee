@@ -1,4 +1,4 @@
-# KotoCoffee
+# Koffee
 
 ## Описание проекта
 
