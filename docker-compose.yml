@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${DB_NAME:-kotocoffee}
+      POSTGRES_USER: ${DB_USERNAME:-kotocoffee}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Задайте DB_PASSWORD в .env (cp .env.example .env)}
+    ports:
+      - "127.0.0.1:${DB_HOST_PORT:-5433}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-kotocoffee}
+      DB_USERNAME: ${DB_USERNAME:-kotocoffee}
+      DB_PASSWORD: ${DB_PASSWORD:?Задайте DB_PASSWORD в .env (cp .env.example .env)}
+      DB_POOL_SIZE: ${DB_POOL_SIZE:-10}
+      SERVER_PORT: ${SERVER_PORT:-8080}
+      KOTOCOFFEE_LOG_LEVEL: ${KOTOCOFFEE_LOG_LEVEL:-INFO}
+    ports:
+      - "${APP_PORT:-8080}:${SERVER_PORT:-8080}"
+    restart: on-failure
+
+volumes:
+  postgres-data:
